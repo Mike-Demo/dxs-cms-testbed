@@ -82,7 +82,8 @@ for orders, payments, tickets, and other private records.
 | Event | Title, description, start/end, timezone, venue or online URL, speakers, capacity, registration state. |
 | Resource | Title, type (guide, whitepaper, video, download), body, media/file, categories/tags, access requirements. |
 | TeamMember | Name, role, biography, portrait, social links, display order. |
-| Testimonial / CustomerStory | Quote, attribution, company/logo, featured flag; long-form story body and related products where applicable. |
+| Testimonial | Quote, attribution, company/logo, featured flag. |
+| CustomerStory | Title, company/logo, long-form story body, related products. |
 | FAQ | Question, rich-text answer, category, display order. |
 | NavigationMenu | Location, ordered nested items, internal content references or external links. |
 | MediaAsset | Local/storage path, MIME type, alt text, caption, size, image dimensions, optional focal point. |
@@ -103,14 +104,20 @@ unique values, self-references, and one-to-one/one-to-many/many-to-many links.
 Use a platform-neutral structured rich-text representation with headings, marks,
 lists, links, quotes, code, images, and embedded content references. Preserve
 structure when editing; render safely without executing arbitrary HTML.
-Define explicit publication filtering: public views show published content whose
-publication time has arrived; admin views expose all states.
+Define explicit publication filtering: `publishedAt` is the authoritative public
+timestamp. Public views in both adapters show only records with `status=published`
+and `publishedAt <= now`; admin views expose all states. A scheduled record stays
+hidden until due-promotion changes its status to `published` and sets
+`publishedAt=scheduledAt`. The mock adapter promotes due records before querying;
+connected mode uses a trusted scheduled database operation. RLS uses the same
+public predicate, and promotion never grants admin privileges to clients.
 
 ### 5. Route and page coverage
 
 Implement these 23 route patterns. Parameterized routes must resolve real seeded
 records and show a useful not-found state for unknown ids/slugs. Preserve search,
 filter, sort, and pagination state in query parameters where applicable.
+The `/login` route is additional to these 23 patterns.
 
 | Route | Required content and behavior |
 | --- | --- |
@@ -140,8 +147,13 @@ filter, sort, and pagination state in query parameters where applicable.
 
 Use shared public, dashboard, and admin layouts. Add a catch-all not-found view.
 Mock mode provides an explicit demo identity for private views; it is not real
-authentication. Connected mode requires authentication for private routes and
-an authorized admin role for CMS views. Never treat route guards as authorization.
+authentication. In connected mode, `/login` provides email/password sign-in and
+account registration, restores the Supabase Auth session on startup, and offers
+sign-out. Unauthenticated private-route requests redirect to `/login` with a
+return destination and resume there after sign-in; sign-out returns to `/login`.
+Authentication is required for private routes and an authorized admin role for
+CMS views; role provisioning is trusted and users cannot grant themselves admin.
+Never treat route guards as authorization.
 
 ### 6. Forms
 
@@ -195,8 +207,14 @@ No primary page may rely on an empty placeholder dataset.
 Include published, draft, scheduled, and archived examples; past/future events;
 in-stock/out-of-stock variants; optional/null fields; Unicode/multilingual text;
 long titles/bodies; nested blocks; embedded references; and local image/document
-assets. Keep seeded relationships valid and schedules deterministic. Include
-separate controlled invalid-input cases in tests, not broken baseline fixtures.
+assets. Keep seeded relationships valid and schedules deterministic. Use a fixed
+UTC `FIXTURE_REFERENCE_TIME` (`2026-10-01T00:00:00Z`) for fixture construction
+and contract tests, passing that clock to both adapters. Production publication
+and upcoming/past-event views use the real current time, not the fixture clock;
+event status is derived from `startAt`. Seed resets restore the same fixed fixture
+timestamps without shifting dates, so live classifications may change over time.
+Include separate controlled invalid-input cases in tests, not broken baseline
+fixtures.
 
 Use the same canonical fixtures for mock mode and an optional Supabase seed,
 preserving ids and relationships. Provide an explicit reset action and document
