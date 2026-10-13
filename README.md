@@ -167,8 +167,12 @@ inspectable after refresh. Use synthetic applicant/customer details in fixtures.
   and Recharts line/bar/pie charts backed by repository data.
 - **Commerce:** variants, inventory, cart, wishlist, derived totals, checkout,
   and stored orders. Simulate payment; do not collect card data or require a
-  payment provider. Validate quantities and stock in both adapters; connected
-  order creation uses trusted transactional logic rather than client totals.
+  payment provider. Expose a typed checkout command in both repository adapters.
+  Validate quantities and stock in both modes. In connected mode, the command
+  must call an authenticated, secured database function delivered with the SQL
+  migration; it re-reads and locks variant prices/stock, derives order totals,
+  decrements stock, and writes the order atomically. Never trust client totals;
+  test insufficient-stock and concurrent checkout failures in both modes.
 - **CMS:** typed fields, rich-text/block editing, reference pickers, draft save,
   preview, schedule/publish/archive, delete confirmation, and validation.
   Preview must be distinct from public publication visibility.
