@@ -60,13 +60,14 @@ Keep shared TypeScript models and validation schemas separate from adapters.
 
 ### 4. Content contracts
 
-Every model includes `id`, `slug`, `createdAt`, `updatedAt`, `publishedAt`,
-`status`, `seoTitle`, `seoDescription`, and `seoImage`. Use stable unique ids and
-unique slugs within each type. `status` is one of `published`, `draft`,
-`scheduled`, or `archived`; `publishedAt` and SEO fields may be null where
-inapplicable, but their keys must exist. `seoImage` references a MediaAsset.
-Keep order/payment/ticket workflow state in separate fields, not `status`.
-Scheduled content also needs `scheduledAt`.
+All records have stable unique `id` values and `createdAt`/`updatedAt`
+timestamps. Independently publishable content also has a unique per-type
+`slug`, `publishedAt`, `status`, `seoTitle`, `seoDescription`, and `seoImage`
+(a MediaAsset reference); nullable publication/SEO fields retain their keys.
+For such content, `status` is `published`, `draft`, `scheduled`, or `archived`,
+and `scheduledAt` is required when status is `scheduled`. Give operational
+and supporting records only applicable fields and separate workflow states
+for orders, payments, tickets, and other private records.
 
 | Model | Required representative fields and relationships |
 | --- | --- |
