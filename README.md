@@ -1,5 +1,7 @@
 # Digital Experience Showcase (DXS)
 
+> Provenance: the canonical brief and content contracts in this repo are based on a prompt from Microsoft Copilot Cowork.
+
 ## Canonical implementation brief
 
 This document is the primary implementation prompt for this repository. It defines
